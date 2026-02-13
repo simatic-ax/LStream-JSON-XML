@@ -16,7 +16,7 @@ permissions:
 jobs:
   call-development:
     name: Build the package
-    uses: ./.github/workflows/package-development-workflow.yml
+    uses: ./.github/workflows/package-development-workflow.yml@main
     secrets:
       APAX_TOKEN: ${{ secrets.APAX_TOKEN }}
     with:
