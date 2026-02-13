@@ -42,14 +42,14 @@ jobs:
           ref: ${{ inputs.ref != '' && inputs.ref || github.ref }}
 
       - name: Login to required registries
-        uses: ./apax-login # change to simatic-ax/actions/apax-login@v4
+        uses: simatic-ax/actions/apax-login@v4 
         with:
           apax-token: ${{ secrets.APAX_TOKEN }}
           registries: |
             https://npm.pkg.github.com/,${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
-        uses: ./apax-install # change to simatic-ax/actions/apax-install@v4
+        uses: simatic-ax/actions/apax-install@v4 
         with:
           path: actions-test # only here for test purposes, remove later
 
@@ -67,13 +67,13 @@ jobs:
           fi
 
       - name: Version the package
-        uses: ./apax-version # change to simatic-ax/actions/apax-version@v4
+        uses: simatic-ax/actions/apax-version@v4
         with:
           path: actions-test # only here for test purposes, remove later
           version: ${{ steps.determine_version.outputs.version }}
 
       - name: Build source code
-        uses: ./apax-build # change to simatic-ax/actions/apax-build@v4
+        uses: simatic-ax/actions/apax-build@v4
         with:
           path: actions-test # only here for test purposes, remove later
           apax-build-targets: |
@@ -84,7 +84,7 @@ jobs:
             --log Debug
 
       - name: Test source code
-        uses: ./apax-test # change to simatic-ax/actions/apax-test@v4
+        uses: simatic-ax/actions/apax-test@v4
         with:
           path: actions-test # only here for test purposes, remove later
           coverage: true
