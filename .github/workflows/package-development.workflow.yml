@@ -30,7 +30,7 @@ jobs:
     name: Build and Test
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/simatic-ax/ci-images/apax-ci-image:4.0.0
+      image: ghcr.io/simatic-ax/ci-images/apax-ci-image:4.2.0
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         uses: simatic-ax/actions/apax-install@v4 
         with:
-          path: actions-test # only here for test purposes, remove later
+          path: ${{ inputs.path }}
 
       - name: Determine version
         id: determine_version
@@ -69,13 +69,13 @@ jobs:
       - name: Version the package
         uses: simatic-ax/actions/apax-version@v4
         with:
-          path: actions-test # only here for test purposes, remove later
+          path: ${{ inputs.path }}
           version: ${{ steps.determine_version.outputs.version }}
 
       - name: Build source code
         uses: simatic-ax/actions/apax-build@v4
         with:
-          path: actions-test # only here for test purposes, remove later
+          path: ${{ inputs.path }}
           apax-build-targets: |
             llvm
             1500
@@ -86,7 +86,7 @@ jobs:
       - name: Test source code
         uses: simatic-ax/actions/apax-test@v4
         with:
-          path: actions-test # only here for test purposes, remove later
+          path: ${{ inputs.path }}
           coverage: true
           loglevel: debug
 
@@ -102,8 +102,8 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: build-artifacts
-          path: |                 # only here for test purposes, alter later
-            actions-test/bin/1500 
-            actions-test/bin/llvm
+          path: |                 
+            ${{ inputs.path }}/bin/1500 
+            ${{ inputs.path }}/bin/llvm
           retention-days: 90
           if-no-files-found: error
