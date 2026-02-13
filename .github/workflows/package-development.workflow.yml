@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         uses: simatic-ax/actions/apax-install@v4 
         with:
-          path: ${{ inputs.path }}
+          immutable: true
 
       - name: Determine version
         id: determine_version
@@ -69,13 +69,11 @@ jobs:
       - name: Version the package
         uses: simatic-ax/actions/apax-version@v4
         with:
-          path: ${{ inputs.path }}
           version: ${{ steps.determine_version.outputs.version }}
 
       - name: Build source code
         uses: simatic-ax/actions/apax-build@v4
         with:
-          path: ${{ inputs.path }}
           apax-build-targets: |
             llvm
             1500
@@ -86,7 +84,6 @@ jobs:
       - name: Test source code
         uses: simatic-ax/actions/apax-test@v4
         with:
-          path: ${{ inputs.path }}
           coverage: true
           loglevel: debug
 
@@ -103,7 +100,7 @@ jobs:
         with:
           name: build-artifacts
           path: |                 
-            ${{ inputs.path }}/bin/1500 
-            ${{ inputs.path }}/bin/llvm
+            ./bin/1500 
+            ./bin/llvm
           retention-days: 90
           if-no-files-found: error

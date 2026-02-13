@@ -13,8 +13,6 @@ permissions:
   actions: write     # required for artifact downloading
   pull-requests: write # Für PR-Erstellung und Management
 
-env:
-  TEMPLATE_PATH: working-directory # Path where the template is created and packed
 jobs:
   call-development:
     name: Build the package
@@ -46,7 +44,6 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: build-artifacts
-          path: bin 
 
       - name: Version package
         uses: simatic-ax/actions/apax-version@v4
@@ -56,8 +53,7 @@ jobs:
       - name: Package source code
         uses: simatic-ax/actions/apax-pack@v4
         with:
-          key: ${{ secrets.APAX_SIGNKEY_V2 }}
-          path: "v2"
+          key: ${{ secrets.APAX_SIGNKEY }}
 
       - name: Login to required registries
         uses: simatic-ax/actions/apax-login@v4
