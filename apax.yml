@@ -1,0 +1,54 @@
+# General information
+name: "@simatic-ax/lstream"
+version: 1.0.0
+type: lib
+keywords:
+  - library
+  - tiax
+author: Siemens
+# Description will be displayed in the apax extension
+description: Library for Serializing and Deserializing XML and JSON files for TIA Portal 19^ and SIMATIC AX
+# Targets which will be compiled with 'apax build' 
+repository:
+  type: "git"
+  url: "https://github.com/simatic-ax/LStream-JSON-XML"
+targets:
+  - "1500"
+  - "llvm"
+# Install settings
+apaxVersion: 4.0.0
+# Dependencies
+devDependencies:
+  "@ax/ax2tia": ^12.0.29
+  "@ax/sdk": ^2510.0.0
+variables:
+  # an arbitrary directory that can be chosen freely
+  PATH_NAME: "./bin/handover-folder"
+  # you can change the predefined output path where the TIA Portal library will be generated
+  TIA_GLOBAL_LIB_PATH: "./lstream-tiax"
+  # set the path to your local TIA Portal installation
+  TIA_INSTALL_PATH: "C:\\Program Files\\Siemens\\Automation\\Portal V19"
+  # remove, if you do not want to allow debugging of your code
+  APAX_BUILD_ARGS:
+    - "--debug"
+    - --generate-runtime-checks
+# Apax scripts
+scripts:
+  # transfer a AX Library to handover library documents for a TIA Libray
+  export-tia-handover-documents: ax2tia -i ./bin/1500/*.lib -o "$PATH_NAME"
+  # convert library handover documents into a global library for the TIA Portal.
+  import-handover-documents-to-tia: '"$TIA_INSTALL_PATH\\bin\\Siemens.Simatic.Lang.Library.Importer.exe" -i "$PATH_NAME" -o "$TIA_GLOBAL_LIB_PATH" -u'
+  create-tialib:
+    - apax build
+    - apax export-tia-handover-documents
+    - apax import-handover-documents-to-tia
+
+# Files, which will be shipped with the library
+files:
+  - ./src
+
+dependencies:
+  "@ax/system-timer": ^10.2.7
+  "@ax/system-serde": ^10.2.7
+catalogs:
+  "@ax/simatic-ax": ^2510.0.0
