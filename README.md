@@ -13,7 +13,7 @@ This version of the library is usable in TIA Portal as a global library and in S
 Enter:
 
 ```iec-st
-apax add @simatic-ax/LStream-JSON-XML
+apax add @simatic-ax/lstream
 ```
 
 > to install this package you need to login into the GitHub registry. You'll find more information [here](https://github.com/simatic-ax/.github/blob/main/docs/personalaccesstoken.md)
