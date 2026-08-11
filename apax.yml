@@ -1,6 +1,6 @@
 # General information
 name: "@simatic-ax/lstream"
-version: 1.0.0
+version: 0.0.0-placeholder
 type: lib
 keywords:
   - library
@@ -13,14 +13,21 @@ repository:
   type: "git"
   url: "https://github.com/simatic-ax/LStream-JSON-XML"
 targets:
-  - "1500"
+  - "s7"
   - "llvm"
 # Install settings
-apaxVersion: 4.0.0
+apaxVersion: ^4.3.0
 # Dependencies
 devDependencies:
-  "@ax/ax2tia": ^12.0.29
-  "@ax/sdk": ^2510.0.0
+  "@ax/ax2tia": ^12.3.10
+  "@ax/sdk": ^2510.17.0
+  "@simatic-ax/mocks": ^4.3.3
+dependencies:
+  "@ax/system-timer": ^10.4.66
+  "@ax/system-serde": ^10.4.66
+catalogs:
+  "@ax/simatic-ax": ^2510.17.0
+  
 variables:
   # an arbitrary directory that can be chosen freely
   PATH_NAME: "./bin/handover-folder"
@@ -34,8 +41,8 @@ variables:
     - --generate-runtime-checks
 # Apax scripts
 scripts:
-  # transfer a AX Library to handover library documents for a TIA Libray
-  export-tia-handover-documents: ax2tia -i ./bin/1500/*.lib -o "$PATH_NAME"
+  # transfer a AX Library to handover library documents for a TIA Library
+  export-tia-handover-documents: ax2tia -i ./bin/s7/*.lib -o "$PATH_NAME"
   # convert library handover documents into a global library for the TIA Portal.
   import-handover-documents-to-tia: '"$TIA_INSTALL_PATH\\bin\\Siemens.Simatic.Lang.Library.Importer.exe" -i "$PATH_NAME" -o "$TIA_GLOBAL_LIB_PATH" -u'
   create-tialib:
@@ -47,8 +54,6 @@ scripts:
 files:
   - ./src
 
-dependencies:
-  "@ax/system-timer": ^10.2.7
-  "@ax/system-serde": ^10.2.7
-catalogs:
-  "@ax/simatic-ax": ^2510.0.0
+# Registries 
+registries:
+  '@simatic-ax': 'https://npm.pkg.github.com/'

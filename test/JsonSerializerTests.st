@@ -1,5 +1,4 @@
 USING Simatic.Ax;
-USING Simatic.Ax.Timer;
 USING AxUnit;
 USING Simatic.Ax.LStream;
 USING Simatic.Ax.LStream.Utilities;
@@ -12,7 +11,8 @@ NAMESPACE LStreamTest
     {TestFixture}
     CLASS JsonSerializerTests
         VAR
-            timerInst : TimerFunctionsMock;       
+
+            //Test1 (Test to try the LStream_JsonSerializer.st by serializing a tree (treeInput) and comparing its output with the expected byte array (expectedJsonByteOutputResult))
             jsonSerializer : LStream_JsonSerializer;
             jsonByteOutputResult : ARRAY[0..600] OF BYTE;
             treeInput : ARRAY[0..200] OF LStream_typeElement;
@@ -43,15 +43,36 @@ NAMESPACE LStreamTest
             BYTE#16#0, BYTE#16#0, BYTE#16#0, BYTE#16#0, BYTE#16#0, BYTE#16#0, BYTE#16#0, BYTE#16#0, BYTE#16#0, BYTE#16#0,
             BYTE#16#0
 ];
+
+
+            //Test2 (Test to try the LStream_JsonSerializer.st when the input tree (treeInput2) has empty arrays (treeInput2[8] & treeInput2[3]) nodes (Coming from a JSON with empty brackets [] in its structure))
+            jsonSerializer2 : LStream_JsonSerializer;
+            jsonByteOutputResult2 : ARRAY[0..600] OF BYTE;
+            treeInput2 : ARRAY[0..200] OF LStream_typeElement;
+            expectedJsonByteOutputResult2 : ARRAY[0..119] OF BYTE := [
+            BYTE#16#7B, BYTE#16#22, BYTE#16#69, BYTE#16#64, BYTE#16#22, BYTE#16#3A, BYTE#16#22, BYTE#16#41, BYTE#16#22, BYTE#16#2C,
+            BYTE#16#22, BYTE#16#6E, BYTE#16#6F, BYTE#16#64, BYTE#16#65, BYTE#16#73, BYTE#16#22, BYTE#16#3A, BYTE#16#5B, BYTE#16#7B,
+            BYTE#16#22, BYTE#16#6E, BYTE#16#6F, BYTE#16#64, BYTE#16#65, BYTE#16#49, BYTE#16#64, BYTE#16#22, BYTE#16#3A, BYTE#16#22,
+            BYTE#16#43, BYTE#16#41, BYTE#16#54, BYTE#16#22, BYTE#16#2C, BYTE#16#22, BYTE#16#69, BYTE#16#74, BYTE#16#65, BYTE#16#6D,
+            BYTE#16#73, BYTE#16#22, BYTE#16#3A, BYTE#16#5B, BYTE#16#5D, BYTE#16#2C, BYTE#16#22, BYTE#16#73, BYTE#16#65, BYTE#16#71,
+            BYTE#16#75, BYTE#16#65, BYTE#16#6E, BYTE#16#63, BYTE#16#65, BYTE#16#49, BYTE#16#64, BYTE#16#22, BYTE#16#3A, BYTE#16#22,
+            BYTE#16#41, BYTE#16#22, BYTE#16#2C, BYTE#16#22, BYTE#16#72, BYTE#16#65, BYTE#16#6C, BYTE#16#65, BYTE#16#61, BYTE#16#73,
+            BYTE#16#65, BYTE#16#64, BYTE#16#22, BYTE#16#3A, BYTE#16#22, BYTE#16#57, BYTE#16#4F, BYTE#16#52, BYTE#16#44, BYTE#16#22,
+            BYTE#16#2C, BYTE#16#22, BYTE#16#6E, BYTE#16#6F, BYTE#16#64, BYTE#16#65, BYTE#16#50, BYTE#16#6F, BYTE#16#73, BYTE#16#69,
+            BYTE#16#74, BYTE#16#69, BYTE#16#6F, BYTE#16#6E, BYTE#16#22, BYTE#16#3A, BYTE#16#7B, BYTE#16#22, BYTE#16#78, BYTE#16#22,
+            BYTE#16#3A, BYTE#16#22, BYTE#16#31, BYTE#16#22, BYTE#16#7D, BYTE#16#7D, BYTE#16#5D, BYTE#16#2C, BYTE#16#22, BYTE#16#65,
+            BYTE#16#64, BYTE#16#67, BYTE#16#65, BYTE#16#73, BYTE#16#22, BYTE#16#3A, BYTE#16#5B, BYTE#16#5D, BYTE#16#7D, BYTE#16#00
+];
+
         END_VAR
         
 
-        {TestSetup}
+        {FixtureSetup}
         METHOD PUBLIC TestSetup 
-            jsonSerializer.TimeoutTimer := timerInst;
+            //Test1 Setup     
             //Populate expected LStreamTypeElementArray
-            // Populate expectedTreeOutput
-            treeInput[0].types := SINT#16#0;
+            //Populate expectedTreeOutput
+                treeInput[0].types := SINT#16#0;
                 treeInput[0].key := 'sessionContext';
                 treeInput[0].value := 'NULL';
                 treeInput[0].depth := SINT#16#0;
@@ -170,13 +191,75 @@ NAMESPACE LStreamTest
                 treeInput[19].value := '0';
                 treeInput[19].depth := SINT#16#04;
                 treeInput[19].closingElement := true;
+
+
+            //Test2 Setup
+            //Populate expected LStreamTypeElementArray
+            //Populate expectedTreeOutput
+                treeInput2[0].types := SINT#16#02;
+                treeInput2[0].key := 'id';
+                treeInput2[0].value := 'A';
+                treeInput2[0].depth := SINT#16#0;
+                treeInput2[0].closingElement := FALSE;
+
+                treeInput2[1].types := SINT#16#01;
+                treeInput2[1].key := 'nodes';
+                treeInput2[1].value := 'NULL';
+                treeInput2[1].depth := SINT#16#0;
+                treeInput2[1].closingElement := FALSE;
+
+                treeInput2[2].types := SINT#16#02;
+                treeInput2[2].key := 'nodeId';
+                treeInput2[2].value := 'CAT';
+                treeInput2[2].depth := SINT#16#02;
+                treeInput2[2].closingElement := FALSE;
+
+                treeInput2[3].types := SINT#16#01;
+                treeInput2[3].key := 'items';
+                treeInput2[3].value := 'NULL';
+                treeInput2[3].depth := SINT#16#02;
+                treeInput2[3].closingElement := FALSE;
+
+                treeInput2[4].types := SINT#16#02;
+                treeInput2[4].key := 'sequenceId';
+                treeInput2[4].value := 'A';
+                treeInput2[4].depth := SINT#16#02;
+                treeInput2[4].closingElement := FALSE;
+
+                treeInput2[5].types := SINT#16#02;
+                treeInput2[5].key := 'released';
+                treeInput2[5].value := 'WORD';
+                treeInput2[5].depth := SINT#16#02;
+                treeInput2[5].closingElement := FALSE;
+
+                treeInput2[6].types := SINT#16#0;
+                treeInput2[6].key := 'nodePosition';
+                treeInput2[6].value := 'NULL';
+                treeInput2[6].depth := SINT#16#02;
+                treeInput2[6].closingElement := FALSE;
+
+                treeInput2[7].types := SINT#16#02;
+                treeInput2[7].key := 'x';
+                treeInput2[7].value := '1';
+                treeInput2[7].depth := SINT#16#03;
+                treeInput2[7].closingElement := TRUE;
+
+                treeInput2[8].types := SINT#16#01;
+                treeInput2[8].key := 'edges';
+                treeInput2[8].value := 'NULL';
+                treeInput2[8].depth := SINT#16#0;
+                treeInput2[8].closingElement := TRUE;
         END_METHOD
+
+        //Test1
         {Test}
         METHOD PUBLIC TestJsonSerializer
             VAR
                 i : INT;                
             END_VAR;
-            timerInst.SetTimerValue := FALSE;
+            // Disable timeout timer for the test
+            AxUnit.Mocking.Mock(mockeeFn := NAME_OF(System.Timer.OnDelay), mockFn := NAME_OF(Simatic.Ax.Mocks.OnDelayMock_false));
+
             jsonSerializer.execute := TRUE;         
             WHILE (TRUE) DO
                 jsonSerializer(tree := treeInput, jsonByteArray := jsonByteOutputResult);                
@@ -195,8 +278,42 @@ NAMESPACE LStreamTest
             //Test Output Content
             FOR i := 0 TO 400 DO             
                 AxUnit.Assert.Equal(jsonByteOutputResult[i], expectedJsonByteOutputResult[i]);
+                
+            END_FOR;             
+        END_METHOD
+
+
+
+
+        //Test2
+        {Test}
+        METHOD PUBLIC TestJsonSerializer_EmptyBrackets
+            VAR
+                i : INT;                
+            END_VAR;
+            // Disable timeout timer for the test
+            AxUnit.Mocking.Mock(mockeeFn := NAME_OF(System.Timer.OnDelay), mockFn := NAME_OF(Simatic.Ax.Mocks.OnDelayMock_false));
+            
+            jsonSerializer2.execute := TRUE;         
+            WHILE (TRUE) DO
+                jsonSerializer2(tree := treeInput2, jsonByteArray := jsonByteOutputResult2);                
+                IF(jsonSerializer2.done = TRUE) THEN
+                    EXIT;
+                END_IF;
+                IF(jsonSerializer2.error = TRUE) THEN
+                    EXIT;
+                END_IF;
+            END_WHILE;
+            //Test block execution 
+            AxUnit.Assert.Equal(actual := jsonSerializer2.count, expected := UINT#119);
+            AXUnit.Assert.Equal(actual := jsonSerializer2.busy, expected := FALSE);
+            AXUnit.Assert.Equal(actual := jsonSerializer2.error, expected := FALSE);
+            AXUnit.Assert.Equal(actual := jsonSerializer2.done, expected := TRUE);
+            //Test Output Content
+            FOR i := 0 TO 119 DO             
+                AxUnit.Assert.Equal(jsonByteOutputResult2[i], expectedJsonByteOutputResult2[i]);
+                
             END_FOR;             
         END_METHOD
     END_CLASS
-    
 END_NAMESPACE

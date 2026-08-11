@@ -13,7 +13,7 @@ This version of the library is usable in TIA Portal as a global library and in S
 Enter:
 
 ```iec-st
-apax add @simatic-ax/LStream-JSON-XML
+apax add @simatic-ax/lstream
 ```
 
 > to install this package you need to login into the GitHub registry. You'll find more information [here](https://github.com/simatic-ax/.github/blob/main/docs/personalaccesstoken.md)
@@ -210,9 +210,10 @@ By leveraging the TIAX workflow, your library blocks are know-how protected when
 Before you begin, ensure you have:
 
 - TIA Portal installed on your Windows machine (see [Compatibility](https://docs.industrial-operations-x.siemens.cloud/r/en-us/ax/ax2tia-docs/7.0.16/converting-simatic-ax-libraries-to-tia-portal-libraries/compatibility) section for required versions)
-- AX SDK V3.0.12 or higher
-- AX STC (System Toolchain): Version 4.4.116 or higher
-- A library built for one of the supported targets: 1500, vplc, or swcpu. LLVM-only libraries cannot be converted.
+- AX SDK V2510.17.0 or higher
+- A library built for the following supported targets: 1500, vplc, or swcpu. LLVM-only libraries cannot be converted.
+
+To use the Library in TIA Portal, the PLC needs to have Firmware version V2.9 or higher.
 
 ### Configuration
 

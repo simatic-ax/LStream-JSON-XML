@@ -21,8 +21,6 @@
     //===============================================================================
 
 //end_region
-
-USING Simatic.Ax.Timer;
 USING System.Timer;
 USING System.Strings;
 USING Simatic.Ax.LStream.Utilities;
@@ -30,119 +28,204 @@ USING Simatic.Ax.LStream.Models;
 NAMESPACE Simatic.Ax.LStream
     FUNCTION_BLOCK LStream_XmlDeserializer
         VAR_INPUT
-            execute : BOOL;     // Rising edge starts action once
-            search  : BOOL;     // TRUE: Searches rawdata for the value of the provided treekeys 
+            /// Rising edge starts action once
+            execute : BOOL;
+            /// TRUE: Searches raw data for the value of the provided tree keys
+            search  : BOOL;
         END_VAR
         VAR_OUTPUT
-            done : BOOL;        // TRUE: Commanded functionality has been completed successfully
-            busy : BOOL;        // TRUE: FB is not finished and new output values can be expected
-            error : BOOL;       // TRUE: An error occurred during the execution of the FB
-            status : WORD := STATUS_NO_CALL;    //16#0000 - 16#7FFF: Status of the FB, 16#8000 - 16#FFFF: Error identification
+            /// TRUE: Commanded functionality has been completed successfully
+            done : BOOL;
+            /// TRUE: FB is not finished and new output values can be expected
+            busy : BOOL;
+            /// TRUE: An error occurred during the execution of the FB
+            error : BOOL;
+            /// 16#0000 - 16#7FFF: Status of the FB, 16#8000 - 16#FFFF: Error identification
+            status : WORD := STATUS_NO_CALL;
+            /// Current parse position in the raw XML data
             pointer : DINT;
-            resultCount : DINT;     // Count of parsed XML elements
+            /// Count of parsed XML elements
+            resultCount : DINT;
         END_VAR
         VAR_IN_OUT
-            tree : ARRAY [*] of LStream_typeElement;    // Tree parsed information is written to, if search option active, keys must be provided
-            raw : ARRAY[*] of BYTE;     // Byte array of raw xml data
+            /// Tree parsed information is written to, if search option active, keys must be provided
+            tree : ARRAY [*] of LStream_typeElement;
+            /// Byte array of raw xml data
+            raw : ARRAY[*] of BYTE;
         END_VAR
         VAR PUBLIC 
-            TimeoutTimer : ITimerFunctions;
+            TimeoutTimer : System.Timer.OnDelay;
         END_VAR
         VAR
-            statOldExecute : BOOL;      // Old value of 'execute' input for edge detection
-            statDepth : SINT := SINT#-1;    // Static value of xml depth
-            statError : BOOL;       // Static value of error
-            statBusy : BOOL;        // Static value of busy
-            statStatus : WORD := STATUS_NO_CALL;        // Static value of status
-            statFBState : USINT := FB_STATE_NO_PROCESSING;      // Static value of fb state
-            statDone : BOOL;        // Static value of done
-            statResultCount : UINT; // Static value of result count
-            statRawIndex : INT;     // Static value of raw index
-            statTreeIndex : UINT;   // Static value of tree index
-            statCountOfTree : INT;  // Static count of tree fields
-            statCountOfRaw : INT;   // Static count of raw fields
-            statIsKeyOpen : BOOL;   // TRUE: key is open, internal flag
-            statIsValueOpen : BOOL; // TRUE: value is open, internal flag
-            statElementOpen : UINT; // Determines the amount of open elements; if large than 0 then at least one element is still open at the current parse position
-            statIsElementOpen : BOOL;   // TRUE: element is open, internal flag
-            statInfoLen : UINT;     // Current  information length key or value 
-            statInfoStartIndex : INT;   // Start index of current info in raw key or value
-            statKeyWritten: BOOL;   // TRUE: key was written into tree
-            statKey : STRING;   // Static key string
-            statValue : STRING; // Static value string
-            statSearch : BOOL;  // TRUE: Only keys provided in tree will be parsed
-            statKeyFound : BOOL;    // TRUE: Key exisits in raw data
-            statKeyNotFoundCount : UINT;    // Count of provided keys that weren't found
-            statSearchIndex : DINT; // Static search index
-            statOpenElements : ARRAY[0.. MAX_CONCURRENT_OPEN_ELEMENTS] of UINT; // Backtrackarray for getting the last elements open
-            statAttrDelimiter : BYTE := BYTE#00;    // Delimiter for attributes
-            instWatchDog : TimerFunctionsImpl;
+            /// Old value of 'execute' input for edge detection
+            statOldExecute : BOOL;
+            /// Static value of xml depth
+            statDepth : SINT := SINT#-1;
+            /// Static value of error
+            statError : BOOL;
+            /// Static value of busy
+            statBusy : BOOL;
+            /// Static value of status
+            statStatus : WORD := STATUS_NO_CALL;
+            /// Static value of fb state
+            statFBState : USINT := FB_STATE_NO_PROCESSING;
+            /// Static value of done
+            statDone : BOOL;
+            /// Static value of result count
+            statResultCount : UINT;
+            /// Static value of raw index
+            statRawIndex : INT;
+            /// Static value of tree index
+            statTreeIndex : UINT;
+            /// Static count of tree fields
+            statCountOfTree : INT;
+            /// Static count of raw fields
+            statCountOfRaw : INT;
+            /// TRUE: key is open, internal flag
+            statIsKeyOpen : BOOL;
+            /// TRUE: value is open, internal flag
+            statIsValueOpen : BOOL;
+            /// Determines the amount of open elements; if larger than 0 then at least one element is still open at the current parse position
+            statElementOpen : UINT;
+            /// TRUE: element is open, internal flag
+            statIsElementOpen : BOOL;
+            /// Current  information length key or value
+            statInfoLen : UINT;
+            /// Start index of current info in raw key or value
+            statInfoStartIndex : INT;
+            /// TRUE: Current key has already been written to the tree
+            statKeyWritten: BOOL;
+            /// Static key string
+            statKey : STRING;
+            /// Static value string
+            statValue : STRING;
+            /// TRUE: Only keys provided in tree will be parsed
+            statSearch : BOOL;
+            /// TRUE: Key exists in raw data
+            statKeyFound : BOOL;
+            /// Count of provided keys that weren't found
+            statKeyNotFoundCount : UINT;
+            /// Static search index
+            statSearchIndex : DINT;
+            /// Backtrack array for getting the last elements open
+            statOpenElements : ARRAY[0.. MAX_CONCURRENT_OPEN_ELEMENTS] of UINT;
+            /// Delimiter for attributes
+            statAttrDelimiter : BYTE := BYTE#00;
         END_VAR
         VAR_TEMP
-            tempRawIndex : INT; // Index of raw field
-            tempExecute : BOOL; // Temp of input execute
-            tempKeyToFind : STRING; // Provided key to which the value should be found
-            tempSearchResult : DINT;    // Temp value of search result
-            tempChar : BYTE;    // Temp value of a byte for searching / looping
+            /// Index of raw field
+            tempRawIndex : INT;
+            /// Temp of input execute
+            tempExecute : BOOL;
+            /// Provided key to which the value should be found
+            tempKeyToFind : STRING;
+            /// Temp value of search result
+            tempSearchResult : DINT;
+            /// Temp value of a byte for searching / looping
+            tempChar : BYTE;
         END_VAR
         VAR CONSTANT
-            FB_STATE_NO_PROCESSING : USINT := USINT#0;  // FB state no processing, ideal state
-            FB_STATE_PARSE : USINT := USINT#10; // FB state parse xml
-            STATUS_EXECUTION_FINISHED : WORD := WORD#16#0000;   // NO error - execution finished without errors
-            STATUS_NO_CALL : WORD := WORD#16#7000;  // No job being currently processed
-            STATUS_FIRST_CALL : WORD := WORD#16#7001;   // First call after incoming new job (rising edge 'execute')
-            STATUS_SUBSEQUENT_CALL : WORD := WORD#16#7002;  // Subsequent call during active processing without further details
-            ERR_TREE_ARRAY_TOO_SMALL : WORD := WORD#16#8201;    // Error: provided array to too small
-            ERR_EMPTY_RAW_DATA : WORD := WORD#16#8401;  // Error: no raw data provided 
-            ERR_UNMATCHED_ELEMENT_CLOSE : WORD := WORD#16#8402; // Error: Encountered more closing tags than there are opening tags
-            ERR_UNEXPECTED_QUOTES : WORD := WORD#16#8404;   // Error: Encountered an unexpected quotes character
-            ERR_MALFORMED : WORD := WORD#16#8406;    // Error: Collection of all not further specified errors, e.g. unclosed elements before file end etc.
-            ERR_UNDEFINED_STATE : WORD := WORD#16#8600; // Error: due to an undefined state in state machine
-            CONTROL_CHARACTERS_UPPER : WORD := WORD#16#1F;  // ASCII code for Unit Separator which is numerically the hightest control character
-            QUESTIONMARK : BYTE := BYTE#16#3F;  // ASCII code for ? indicates xml header
-            EXCLAMATION : BYTE := BYTE#16#21;   // ASCII code for ! indicates comment
-            DOUBLEQUOTES : BYTE := BYTE#16#22;  // ASCII code for " frames value
-            QUOTES : BYTE := BYTE#16#27;    // ASCII code for ' frames value
-            SMALLER : BYTE := BYTE#16#3C;   // ASCII code for < indicates a new key
-            EQUALS : BYTE := BYTE#16#3D;    // ASCII code for '=' indicates key is finished follows by value
-            GREATER : BYTE := BYTE#16#3E;   // ASCII code for  > indicates key can be written
-            SPACE : BYTE := BYTE#16#20;     // ASCII codefor SPACE indicates key is finished
-            SLASH : BYTE := BYTE#16#2F;     // ASCII code for / indicates closing
-            CARRIAGE_RETURN : BYTE := BYTE#16#0D;   // ASCII code for carriage return
-            LINE_FEED : BYTE := BYTE#16#0A; // ASCII code for line feed
-            TAB : BYTE := BYTE#16#09;   // ASCII code for TAB
-            MINUS : BYTE := BYTE#16#2D; // ASCII code for -
-            EMPTY : SINT := SINT#0;     // Constant for zero value
-            ELEMENT : SINT := SINT#0;   // Numerical identifier for XML type elemt
-            ATTRIBUTE : SINT := SINT#1; // Numerical identifier for XML type attirbute
-            FIRST_DIM : USINT := USINT#1;   // Constant for first array dimension
-            MAX_LOOP_TIME : TIME := T#3ms;  // Max duration of loop, will be continued in next cycle
-            INVALID_SEARCH : DINT := -1;    // Return value if Search in LParse_FindStringInCharrArrayAdv was not successfull
-            KEY_NOT_FOUND : STRING := 'Key not found';  // String value in case key wasn't found
-            STRING_NULL : STRING := 'NULL'; // String is default empty with string content named 'NULL'
-            MAX_CONCURRENT_OPEN_ELEMENTS : UINT := UINT#150;    // Maximal number of elements that can be open at any time
-            STRING_EMPTY : STRING := '';    // Empty string for resetting of fields
-
+            /// FB state no processing, ideal state
+            FB_STATE_NO_PROCESSING : USINT := USINT#0;
+            /// FB state parse xml
+            FB_STATE_PARSE : USINT := USINT#10;
+            /// NO error - execution finished without errors
+            STATUS_EXECUTION_FINISHED : WORD := WORD#16#0000;
+            /// No job being currently processed
+            STATUS_NO_CALL : WORD := WORD#16#7000;
+            /// First call after incoming new job (rising edge 'execute')
+            STATUS_FIRST_CALL : WORD := WORD#16#7001;
+            /// Subsequent call during active processing without further details
+            STATUS_SUBSEQUENT_CALL : WORD := WORD#16#7002;
+            /// Error: provided array to too small
+            ERR_TREE_ARRAY_TOO_SMALL : WORD := WORD#16#8201;
+            /// Error: no raw data provided
+            ERR_EMPTY_RAW_DATA : WORD := WORD#16#8401;
+            /// Error: Encountered more closing tags than there are opening tags
+            ERR_UNMATCHED_ELEMENT_CLOSE : WORD := WORD#16#8402;
+            /// Error: Encountered an unexpected quotes character
+            ERR_UNEXPECTED_QUOTES : WORD := WORD#16#8404;
+            /// Error: Collection of all not further specified errors, e.g. unclosed elements before file end etc.
+            ERR_MALFORMED : WORD := WORD#16#8406;
+            /// Error: due to an undefined state in state machine
+            ERR_UNDEFINED_STATE : WORD := WORD#16#8600;
+            /// ASCII code for Unit Separator which is numerically the highest control character
+            CONTROL_CHARACTERS_UPPER : WORD := WORD#16#1F;
+            /// ASCII code for ? indicates xml header
+            QUESTIONMARK : BYTE := BYTE#16#3F;
+            /// ASCII code for ! indicates comment
+            EXCLAMATION : BYTE := BYTE#16#21;
+            /// ASCII code for " frames value
+            DOUBLE_QUOTES : BYTE := BYTE#16#22;
+            /// ASCII code for ' frames value
+            QUOTES : BYTE := BYTE#16#27;
+            /// ASCII code for < indicates a new key
+            SMALLER : BYTE := BYTE#16#3C;
+            /// ASCII code for '=' indicates key is finished follows by value
+            EQUALS : BYTE := BYTE#16#3D;
+            /// ASCII code for  > indicates key can be written
+            GREATER : BYTE := BYTE#16#3E;
+            /// ASCII code for SPACE indicates key is finished
+            SPACE : BYTE := BYTE#16#20;
+            /// ASCII code for / indicates closing
+            SLASH : BYTE := BYTE#16#2F;
+            /// ASCII code for carriage return
+            CARRIAGE_RETURN : BYTE := BYTE#16#0D;
+            /// ASCII code for line feed
+            LINE_FEED : BYTE := BYTE#16#0A;
+            /// ASCII code for TAB
+            TAB : BYTE := BYTE#16#09;
+            /// ASCII code for -
+            MINUS : BYTE := BYTE#16#2D;
+            /// Constant for zero value
+            EMPTY : SINT := SINT#0;
+            /// Numerical identifier for XML type element
+            ELEMENT : SINT := SINT#0;
+            /// Numerical identifier for XML type attribute
+            ATTRIBUTE : SINT := SINT#1;
+            /// Constant for first array dimension
+            FIRST_DIM : USINT := USINT#1;
+            /// Max duration of loop, will be continued in next cycle
+            MAX_LOOP_TIME : TIME := T#3ms;
+            /// Return value if Search in LStream_FindStringInByteCharArrayAdv was not successful
+            INVALID_SEARCH : DINT := -1;
+            /// String value in case key wasn't found
+            KEY_NOT_FOUND : STRING := 'Key not found';
+            /// String is default empty with string content named 'NULL'
+            STRING_NULL : STRING := 'NULL';
+            /// Maximal number of elements that can be open at any time
+            MAX_CONCURRENT_OPEN_ELEMENTS : UINT := UINT#150;
+            /// Empty string for resetting of fields
+            STRING_EMPTY : STRING := '';
             
-            QUESTIONMARKINT : INT := 63;
-            EXCLAMATIONINT : INT := 33;
-            DOUBLEQUOTESINT : INT := 34;
-            QUOTESINT : INT := 39;
-            SMALLERINT : INT := 60;
-            EQUALSINT : INT := 61;
-            GREATERINT : INT := 62;
-            SPACEINT : INT := 32;
-            SLASHINT : INT := 47;
-            CARRIAGE_RETURNINT : INT := 13;
-            LINE_FEEDINT : INT := 10;
-            TABINT : INT := 9;
-            MINUSINT : INT := 45;
+            /// ASCII code for ?
+            QUESTIONMARK_INT : INT := 63;
+            /// ASCII code for !
+            EXCLAMATION_INT : INT := 33;
+            /// ASCII code for "
+            DOUBLE_QUOTES_INT : INT := 34;
+            /// ASCII code for '
+            QUOTES_INT : INT := 39;
+            /// ASCII code for <
+            SMALLER_INT : INT := 60;
+            /// ASCII code for =
+            EQUALS_INT : INT := 61;
+            /// ASCII code for >
+            GREATER_INT : INT := 62;
+            /// ASCII code for SPACE
+            SPACE_INT : INT := 32;
+            /// ASCII code for /
+            SLASH_INT : INT := 47;
+            /// ASCII code for carriage return
+            CARRIAGE_RETURN_INT : INT := 13;
+            /// ASCII code for line feed
+            LINE_FEED_INT : INT := 10;
+            /// ASCII code for TAB
+            TAB_INT : INT := 9;
+            /// ASCII code for -
+            MINUS_INT : INT := 45;
         END_VAR
         tempExecute := execute;
-
-        IF TimeoutTimer = NULL THEN
-			TimeoutTimer := instWatchDog;
-		END_IF;
 
     //region TRIGGERING
 
@@ -211,10 +294,10 @@ NAMESPACE Simatic.Ax.LStream
                 // #region PARSE XML
 
                     //reset and start watchdog here so that for loop runs for a maximum of 5 seconds
-                    TimeoutTimer.TimerFunction(signal := FALSE, duration := MAX_LOOP_TIME);
+                    TimeoutTimer(signal := FALSE, duration := MAX_LOOP_TIME);
                     
                     //start watchdog
-                    TimeoutTimer.TimerFunction(signal := TRUE, duration := MAX_LOOP_TIME);
+                    TimeoutTimer(signal := TRUE, duration := MAX_LOOP_TIME);
                     
 
                     tempRawIndex := statRawIndex;
@@ -240,12 +323,12 @@ NAMESPACE Simatic.Ax.LStream
                         END_IF;
 
                         statRawIndex := tempRawIndex;
-                        // Swich case of current byte
+                        // Switch case of current byte
                         CASE TO_INT(raw[tempRawIndex]) OF           //BYTE/ WORD Can not be selected as CASE selector
-                            SMALLERINT: 
-                                //region READ OPENING KEY SIMBOLS
+                            SMALLER_INT: 
+                                //region READ OPENING KEY SYMBOLS
 
-                                    // There MUST be some characters after a open <
+                                    // There MUST be some characters after an open <
                                     // so if the array is too short the xml is malformed
                                     IF ((tempRawIndex + 1) > statCountOfRaw) THEN
                                         statStatus := ERR_MALFORMED;
@@ -279,13 +362,13 @@ NAMESPACE Simatic.Ax.LStream
                                     IF (raw[tempRawIndex +1] = QUESTIONMARK) OR (raw[tempRawIndex + 1] = EXCLAMATION) THEN
                                         
                                         CASE TO_INT(raw[tempRawIndex + 1]) OF                   //SAME CASE BYTE NOT ALLOWED
-                                            EXCLAMATIONINT: 
+                                            EXCLAMATION_INT: 
                                                 IF raw[tempRawIndex +2] = MINUS THEN
                                                     tempChar := MINUS;
                                                 ELSE
                                                     tempChar := GREATER;
                                                 END_IF;
-                                            QUESTIONMARKINT:
+                                            QUESTIONMARK_INT:
                                                 tempChar := QUESTIONMARK;
                                         END_CASE;
 
@@ -488,10 +571,10 @@ NAMESPACE Simatic.Ax.LStream
                                         statIsValueOpen := FALSE;
                                     END_IF;
 
-                                //endregion READ OPENING KEY SIMBOLS
+                                //endregion READ OPENING KEY SYMBOLS
 
-                            SLASHINT:
-                                //region READ DELIMETER /
+                            SLASH_INT:
+                                //region READ DELIMITER /
                                     IF statIsValueOpen THEN
                                         
                                         statInfoLen := statInfoLen + UINT#1;
@@ -546,21 +629,25 @@ NAMESPACE Simatic.Ax.LStream
                                         END_IF;
                                         
                                     END_IF;
-                            //endregion READ DELIMETER /
+                            //endregion READ DELIMITER /
                         
-                        SPACEINT:
+                        SPACE_INT:
                             
                             IF statIsValueOpen THEN
                                     
                                 statInfoLen := statInfoLen + UINT#1;
-                                
+
+                            ELSIF statIsKeyOpen THEN
+                                    
+                                tempRawIndex := tempRawIndex; // Ignore "empty space" between a key name and '=' so spaces are not added to the key 
+                                    
                             ELSE
                                 statIsKeyOpen := TRUE;
                                 statInfoStartIndex := tempRawIndex + 1;
                                 statInfoLen := UINT#0;
                             END_IF;
                         
-                        GREATERINT:
+                        GREATER_INT:
                             //region READ WRITING KEY SYMBOLS
                             
                                 IF NOT statIsValueOpen THEN
@@ -573,7 +660,7 @@ NAMESPACE Simatic.Ax.LStream
                             
                             //endregion READ WRITING KEY SYMBOLS
                         
-                        EQUALSINT:
+                        EQUALS_INT:
                           
                             IF statIsValueOpen THEN
                                 
@@ -649,7 +736,7 @@ NAMESPACE Simatic.Ax.LStream
                                 
                                 // This is not valid, as a equals character '=' that is not within an element
                                 // has to open an attribute with either ' or "
-                                IF raw[tempRawIndex] <> DOUBLEQUOTES AND raw[tempRawIndex] <> QUOTES THEN
+                                IF raw[tempRawIndex] <> DOUBLE_QUOTES AND raw[tempRawIndex] <> QUOTES THEN
                                     
                                     statStatus := ERR_MALFORMED;
                                     statDone := TRUE;
@@ -719,8 +806,8 @@ NAMESPACE Simatic.Ax.LStream
                                 
                             END_IF;
 
-                        QUOTESINT:
-                            //region READ VALUE SYMBOLES
+                        QUOTES_INT:
+                            //region READ VALUE SYMBOLS
                                 // Quotes can never occur within a key, which is always closed by a '=', '/>' or '>'
                                 IF statIsKeyOpen THEN
                                     statStatus := ERR_UNEXPECTED_QUOTES;
@@ -731,7 +818,7 @@ NAMESPACE Simatic.Ax.LStream
                                 
                                 statInfoLen := statInfoLen + UINT#1;
                                 
-                            //endregion READ VALUE SYMBOLES     
+                            //endregion READ VALUE SYMBOLS     
                             
                         ELSE//all other characters  
                             //region READ OTHER SIGN
@@ -742,9 +829,11 @@ NAMESPACE Simatic.Ax.LStream
                         END_CASE;
 
                         statRawIndex := tempRawIndex;
-                    
+
+                        // Call for Timeout timer to update value
+                        TimeoutTimer();
                         //quit and resume in next cycle if watchdogtimer is exceed
-                        IF (TimeoutTimer.TimerFunction()) THEN
+                        IF (TimeoutTimer.output) THEN
                             statRawIndex := statRawIndex + 1;
                             EXIT;
                         ELSIF tempRawIndex <= statCountOfRaw THEN
@@ -781,23 +870,23 @@ NAMESPACE Simatic.Ax.LStream
             //endregion EXECUTION FINISHED
             
         ELSIF (statStatus.%X15 = TRUE) AND (statError = FALSE) THEN // Error occurred (#statStatus is 16#8000 to 16#FFFF)
-            //region ERROR OCCURED
+            //region ERROR OCCURRED
                 statDone := FALSE;
                 statBusy := FALSE;
                 statError := TRUE;
                 // execution aborted --> set state no processing
                 statFBState := FB_STATE_NO_PROCESSING;
-            //endregion ERROR OCCURED
+            //endregion ERROR OCCURRED
             
         ELSIF (tempExecute = FALSE) AND ((statDone = TRUE) OR (statError = TRUE)) THEN // Reset outputs
-            //region EXECUTE RESETED
+            //region EXECUTE RESET
                 statDone := FALSE;
                 statBusy := FALSE;
                 statError := FALSE;
                 statStatus := STATUS_NO_CALL;
                 // Reset application specific outputs
                 statResultCount := UINT#0;
-            //endregion EXECUTE RESETED
+            //endregion EXECUTE RESET
         END_IF;
         
         //region WRITE STATIC VALUES TO OUTPUTS

@@ -4,13 +4,17 @@ NAMESPACE Simatic.Ax.LStream.Utilities
     FUNCTION StringToByteArray : BOOL
         VAR_INPUT
             string1 : STRING;
-            string2 : STRING := ''; // Optional
-            string3 : STRING := ''; // Optional
-            string4 : STRING := ''; // Optional
+            /// Optional
+            string2 : STRING := '';
+            /// Optional
+            string3 : STRING := '';
+            /// Optional
+            string4 : STRING := '';
         END_VAR
         
         VAR_IN_OUT
-            byteArray : ARRAY[0..10000] OF BYTE; // Ensure this array is large enough to hold all bytes
+            /// Ensure this array is large enough to hold all bytes
+            byteArray : ARRAY[0..10000] OF BYTE;
         END_VAR
         
         VAR

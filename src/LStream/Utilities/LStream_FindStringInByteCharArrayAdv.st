@@ -24,23 +24,34 @@ USING System.Math;
 NAMESPACE Simatic.Ax.LStream.Utilities
   FUNCTION LStream_FindStringInByteCharArrayAdv : DINT  //Returns the index of found string
     VAR_INPUT
-      searchFor : STRING;   // Text that is searched for
-      startPosition : DINT; // Start position in array   //CHANGE TO UDINT;
+      /// Text that is searched for
+      searchFor : STRING;
+      /// Start position in array   //CHANGE TO UDINT;
+      startPosition : DINT;
     END_VAR
     VAR_IN_OUT
-      searchIn : ARRAY[*] of BYTE;  // Array of Char to search in
+      /// Array of Char to search in
+      searchIn : ARRAY[*] of BYTE;
     END_VAR
     VAR_TEMP
-      tempLowerBound : DINT;   // Lower bound of given array
-      tempNumElements : UDINT; // Number of elements in given array 
-      tempLenSearchFor : INT;  // Length of text that is searched for
-      tempPosInArray : DINT;   // Position in array during search (0-based)          
-      tempPosInString : INT;   // Position in working string during search
-      tempString : STRING;     // Temporary string to work with
+      /// Lower bound of given array
+      tempLowerBound : DINT;
+      /// Number of elements in given array
+      tempNumElements : UDINT;
+      /// Length of text that is searched for
+      tempLenSearchFor : INT;
+      /// Position in array during search (0-based)
+      tempPosInArray : DINT;
+      /// Position in working string during search
+      tempPosInString : INT;
+      /// Temporary string to work with
+      tempString : STRING;
     END_VAR
     VAR CONSTANT
-      FIRST_DIM : USINT := USINT#1;      // Constant for first array dimension
-      MAX_LEN_STRING : UINT := UINT#254; // Max.length of String
+      /// Constant for first array dimension
+      FIRST_DIM : USINT := USINT#1;
+      /// Max.length of String
+      MAX_LEN_STRING : UINT := UINT#254;
     END_VAR
 
     // Initialization
@@ -68,7 +79,7 @@ NAMESPACE Simatic.Ax.LStream.Utilities
                     result => tempString);
 
       // Search for text at beginning
-      tempPosInString := PositionOf(value := tempString, seekValue := searchFor);      //CHECH HOW TO IMPLEMENT
+      tempPosInString := PositionOf(value := tempString, seekValue := searchFor);      //CHECK HOW TO IMPLEMENT
 
       // Keyword was found
       IF tempPosInString > 0 THEN
