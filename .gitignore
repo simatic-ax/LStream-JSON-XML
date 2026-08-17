@@ -5,4 +5,5 @@ obj
 testresult
 scl
 *.tgz
+*.zip
 lstream-tiax
