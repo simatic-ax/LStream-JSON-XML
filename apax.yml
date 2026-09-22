@@ -52,7 +52,10 @@ scripts:
 
 # Files, which will be shipped with the library
 files:
-  - ./src
+  - './README.md'
+  - './LICENSE.md'
+  - './docs'
+  - './src'
 
 # Registries 
 registries:
