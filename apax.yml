@@ -21,7 +21,7 @@ apaxVersion: ^4.3.0
 devDependencies:
   "@ax/ax2tia": ^12.3.10
   "@ax/sdk": ^2510.17.0
-  "@simatic-ax/mocks": ^4.3.3
+  "@simatic-ax/mocks": ^5.0.0
 dependencies:
   "@ax/system-timer": ^10.4.66
   "@ax/system-serde": ^10.4.66
